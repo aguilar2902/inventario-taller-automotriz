@@ -4,12 +4,12 @@ Sistema de gestión de inventario desarrollado en Java con interfaz Swing, dise�
 
 ## 🚀 Características
 
-- ✅ Sistema de login seguro con encriptación BCrypt
-- ✅ Gestión completa de productos (CRUD)
-- ✅ Categorización de productos
-- ✅ Control de stock con alertas
-- ✅ Registro de movimientos de inventario
-- ✅ Interfaz moderna con FlatLaf
+- [ ] Sistema de login seguro con encriptación BCrypt
+- [ ] Gestión completa de productos (CRUD)
+- [ ] Categorización de productos
+- [ ] Control de stock con alertas
+- [ ] Registro de movimientos de inventario
+- [ ] Interfaz moderna con FlatLaf
 
 ## 🛠️ Tecnologías
 
@@ -39,3 +39,6 @@ mvn exec:java -Dexec.mainClass="com.taller.inventario.Main"
 ## 👨‍💻 Autor
 
 Jonathan Aguilar - [GitHub](https://github.com/aguilar2902)
+
+## 📝 Estado
+En desarrollo activo
