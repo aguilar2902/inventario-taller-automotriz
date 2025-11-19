@@ -2,6 +2,7 @@ package com.taller;
 
 import com.formdev.flatlaf.FlatLightLaf;
 import com.taller.config.DatabaseManager;
+import com.taller.service.AuthService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.swing.*;
@@ -24,6 +25,16 @@ public class Main
         DatabaseManager.getInstance();
 
         // Iniciar aplicación
+        AuthService authService = AuthService.getInstance();
+        boolean loginExitoso = authService.login("admin", "admin123");
+
+        logger.info("Prueba de login: " + (loginExitoso ? "EXITOSO ✓" : "FALLIDO ✗"));
+
+        if (loginExitoso) {
+            logger.info("Usuario autenticado: " + authService.getUsuarioActual().getNombreCompleto());
+            logger.info("Es admin: " + authService.isAdmin());
+        }
+
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Sistema de Inventario - Taller Automotriz");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

@@ -16,6 +16,16 @@ public class Usuario {
         ADMIN, EMPLEADO
     }
 
+    //Constructor vacio
+    public Usuario(Integer p_id, String p_usuario, String p_contrasena, String p_nombreCompleto, Rol p_rol, boolean p_activo, LocalDateTime p_fecha){
+        this.setId(p_id);
+        this.setUsuario(p_usuario);
+        this.setContrasena(p_contrasena);
+        this.setNombreCompleto(p_nombreCompleto);
+        this.setRol(p_rol);
+        this.setActivo(p_activo);
+        this.setFechaCreacion(p_fecha);
+    }
     // Constructor completo
     public Usuario(String p_usuario, String p_contrasena, String p_nombreCompleto, Rol p_rol) {
         this.setUsuario(p_usuario);
@@ -27,8 +37,9 @@ public class Usuario {
     }
 
     //setters
-    private void setId(Integer id) {
-        this.id = id;
+
+    private void setId(Integer p_id) {
+        this.id = p_id;
     }
     private void setUsuario(String p_usuario) {
         this.usuario = p_usuario;
