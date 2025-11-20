@@ -12,6 +12,9 @@ public class MainView extends JFrame{
     private static final Logger logger = LoggerFactory.getLogger(MainView.class);
     private final AuthService authService;
 
+    private CardLayout cardLayout;
+    private JPanel panelCentral;
+
     public MainView() {
         this.authService = AuthService.getInstance();
         initComponents();
@@ -31,13 +34,58 @@ public class MainView extends JFrame{
         JPanel topBar = createTopBar();
         mainPanel.add(topBar, BorderLayout.NORTH);
 
-        // Panel central (aquí irán las funcionalidades)
-        JPanel centerPanel = createCenterPanel();
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
-
+        // --- AQUÍ INSTALAMOS NAV PRINCIPAL ---
+        createNavigationMenu(mainPanel);
+        // --- AQUÍ VA EL SISTEMA DE TARJETAS ---
+        createCardSystem(mainPanel);
         add(mainPanel);
-
+        registrarVistas();
         logger.info("Ventana principal inicializada");
+    }
+    // ============================================================
+    //  NAVBAR LATERAL / MENU
+    // ============================================================
+    private void createNavigationMenu(JPanel mainPanel) {
+        JPanel sidebar = new JPanel();
+        sidebar.setPreferredSize(new Dimension(200, 700));
+        sidebar.setBackground(new Color(230, 230, 230));
+        sidebar.setLayout(new GridLayout(10, 1, 0, 10));
+
+        JButton btnProductos = new JButton("Productos");
+        btnProductos.addActionListener(e -> mostrarVista("productos"));
+
+        JButton btnInicio = new JButton("Inicio");
+        btnInicio.addActionListener(e -> mostrarVista("inicio"));
+
+        sidebar.add(btnInicio);
+        sidebar.add(btnProductos);
+
+        mainPanel.add(sidebar, BorderLayout.WEST);
+    }
+    // ============================================================
+    //  SISTEMA DE CARDLAYOUT
+    // ============================================================
+    private void createCardSystem(JPanel mainPanel) {
+        cardLayout = new CardLayout();
+        panelCentral = new JPanel(cardLayout);
+        panelCentral.setBackground(Color.WHITE);
+
+        mainPanel.add(panelCentral, BorderLayout.CENTER);
+    }
+    private void registrarVistas() {
+
+        // Vista de inicio (la que ya tenías)
+        panelCentral.add(createCenterPanel(), "inicio");
+
+        // Vista de productos (tu clase completa)
+        panelCentral.add(new ProductosView(), "productos");
+
+        // Puedes agregar más: clientes, reportes, inventario, etc.
+    }
+
+    public void mostrarVista(String nombre) {
+        cardLayout.show(panelCentral, nombre);
+        logger.info("Cambiando vista a: " + nombre);
     }
 
     private JPanel createTopBar() {

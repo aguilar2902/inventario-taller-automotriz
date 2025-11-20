@@ -20,6 +20,8 @@ public class DatabaseManager {
             this.connection = DriverManager.getConnection(DB_URL);
             logger.info("Conexión a base de datos establecida");
             initializeDatabase();
+            createDefaultAdmin();
+            createDefaultCategorias();
         } catch (ClassNotFoundException | SQLException e) {
             logger.error("Error al conectar con la base de datos", e);
         }
@@ -56,8 +58,8 @@ public class DatabaseManager {
                     username VARCHAR(50) UNIQUE NOT NULL,
                     password VARCHAR(255) NOT NULL,
                     nombre_completo VARCHAR(100) NOT NULL,
-                    rol VARCHAR(20) NOT NULL DEFAULT 'EMPLEADO',
-                    activo BOOLEAN DEFAULT 1,
+                    rol VARCHAR(20) NOT NULL,
+                    activo BOOLEAN NOT NULL DEFAULT TRUE,
                     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """);
@@ -67,8 +69,7 @@ public class DatabaseManager {
                 CREATE TABLE IF NOT EXISTS categorias (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     nombre VARCHAR(100) NOT NULL UNIQUE,
-                    descripcion TEXT,
-                    activo BOOLEAN DEFAULT 1
+                    activo BOOLEAN NOT NULL DEFAULT TRUE
                 )
             """);
 
@@ -83,7 +84,6 @@ public class DatabaseManager {
                     stock_actual INTEGER DEFAULT 0,
                     stock_minimo INTEGER DEFAULT 5,
                     precio_unitario DECIMAL(10,2),
-                    ubicacion VARCHAR(100),
                     activo BOOLEAN DEFAULT 1,
                     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (categoria_id) REFERENCES categorias(id)
@@ -111,6 +111,7 @@ public class DatabaseManager {
 
             // Crear usuario admin por defecto
             createDefaultAdmin();
+            createDefaultCategorias();
 
         } catch (SQLException e) {
             logger.error("Error al inicializar base de datos", e);
@@ -134,6 +135,34 @@ public class DatabaseManager {
             }
         } catch (SQLException e) {
             logger.error("Error al crear usuario admin por defecto", e);
+        }
+    }
+
+    private void createDefaultCategorias() {
+        String checkCategorias = "SELECT COUNT(*) FROM categorias";
+        try (Statement stmt = connection.createStatement();
+             var rs = stmt.executeQuery(checkCategorias)) {
+
+            if (rs.next() && rs.getInt(1) == 0) {
+                // No hay categorías, crear algunas por defecto
+                String[] categoriasDefault = {
+                        "INSERT INTO categorias (nombre, activo) VALUES ('Baterías', 1)",
+                        "INSERT INTO categorias (nombre, activo) VALUES ('Alternadores', 1)",
+                        "INSERT INTO categorias (nombre, activo) VALUES ('Arrancadores', 1)",
+                        "INSERT INTO categorias (nombre, activo) VALUES ('Cables', 1)",
+                        "INSERT INTO categorias (nombre, activo) VALUES ('Fusibles', 1)",
+                        "INSERT INTO categorias (nombre, activo) VALUES ('Iluminación', 1)",
+                        "INSERT INTO categorias (nombre, activo) VALUES ('Sensores', 0)",
+                        "INSERT INTO categorias (nombre, activo) VALUES ('Otros', 1)"
+                };
+
+                for (String sql : categoriasDefault) {
+                    stmt.execute(sql);
+                }
+                logger.info("Categorías por defecto creadas");
+            }
+        } catch (SQLException e) {
+            logger.error("Error al crear categorías por defecto", e);
         }
     }
 

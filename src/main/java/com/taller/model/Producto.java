@@ -15,7 +15,20 @@ public class Producto {
     private LocalDateTime fechaCreacion;
     private Categoria categoria;
 
-    public Producto(String p_codigo, String p_nombre, String p_descripcion, int p_stockActual, int p_stockMinimo, BigDecimal p_precioUnitario, boolean p_activo, Categoria p_categoria) {
+    public Producto(Integer p_id, String p_codigo, String p_nombre, String p_descripcion, int p_stockActual, int p_stockMinimo, BigDecimal p_precioUnitario, boolean p_activo, LocalDateTime fechaCreacion, Categoria p_categoria) {
+        this.setId(p_id);
+        this.setCodigo(p_codigo);
+        this.setNombre(p_nombre);
+        this.setDescripcion(p_descripcion);
+        this.setStockActual(p_stockActual);
+        this.setStockMinimo(p_stockMinimo);
+        this.setPrecioUnitario(p_precioUnitario);
+        this.setActivo(p_activo);
+        this.setFechaCreacion(fechaCreacion);
+        this.setCategoria(p_categoria);
+    }
+
+    public Producto(String p_codigo, String p_nombre, String p_descripcion, int p_stockActual, int p_stockMinimo, BigDecimal p_precioUnitario, boolean p_activo,  Categoria p_categoria) {
         this.setCodigo(p_codigo);
         this.setNombre(p_nombre);
         this.setDescripcion(p_descripcion);
@@ -27,6 +40,9 @@ public class Producto {
         this.setCategoria(p_categoria);
     }
 
+    private void setId(Integer p_id){
+        this.id = p_id;
+    }
     private void setCodigo(String p_codigo){
         this.codigo = p_codigo;
     }
@@ -84,6 +100,10 @@ public class Producto {
     }
     public Categoria getCategoria(){
         return this.categoria;
+    }
+
+    public boolean necesitaReabastece(){
+        return this.getStockActual() <= this.getStockMinimo();
     }
 
     @Override
