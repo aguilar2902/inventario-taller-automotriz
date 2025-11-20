@@ -22,6 +22,8 @@ public class DatabaseManager {
             initializeDatabase();
             createDefaultAdmin();
             createDefaultCategorias();
+            createDefaultAdmin();
+            createDefaultCategorias();
         } catch (ClassNotFoundException | SQLException e) {
             logger.error("Error al conectar con la base de datos", e);
         }
