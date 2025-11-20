@@ -369,7 +369,7 @@ public class ProductosView extends JPanel {
         try {
             Integer id = (Integer) modeloTabla.getValueAt(selectedRow, 0);
             Producto producto = controller.obtenerProductoPorId(id);
-
+            System.out.println(producto.getId());
             if (producto != null) {
                 ProductoFormDialog dialog = new ProductoFormDialog(
                         (Frame) SwingUtilities.getWindowAncestor(this),

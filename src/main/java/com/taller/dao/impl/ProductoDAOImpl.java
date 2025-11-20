@@ -179,8 +179,9 @@ public class ProductoDAOImpl implements IProductoDAO {
             int affectedRows = stmt.executeUpdate();
 
             if (affectedRows > 0) {
-                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
+                try (Statement idStmt = conn.createStatement();
+                     ResultSet rs = idStmt.executeQuery("SELECT last_insert_rowid()")) {
+                    if (rs.next()) {
                         logger.info("Producto creado: " + p_producto.getCodigo() + " - " + p_producto.getNombre());
                     }
                 }
@@ -323,8 +324,9 @@ public class ProductoDAOImpl implements IProductoDAO {
             } catch (SQLException e) {
                 // Si no hay JOIN, solo crear con ID
                 // Luego el servicio puede cargar los datos completos si es necesario
-                ICategoriaDAO categoriaDAO = new CategoriaDAOImpl();
-                cat = categoriaDAO.buscarPorId(catId).orElse(null);
+                //ICategoriaDAO categoriaDAO = new CategoriaDAOImpl();
+                //cat = categoriaDAO.buscarPorId(catId).orElse(null);
+                cat = new Categoria(catId, null, true);
             }
         }
 
