@@ -75,32 +75,5 @@ public class AuthService {
         return isAuthenticated() && usuarioActual.getRol().equals(Usuario.Rol.ADMIN);
     }
 
-    public boolean registrarUsuario(String p_usuario, String password, String nombreCompleto, Usuario.Rol rol) {
-        try {
-            // Verificar si ya existe
-            if (usuarioDAO.existeUsuario(p_usuario)) {
-                logger.warn("El usuario ya existe: " + p_usuario);
-                return false;
-            }
 
-            // Encriptar contraseña
-            String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
-
-            // Crear usuario
-            Usuario nuevoUsuario = new Usuario(p_usuario, hashedPassword, nombreCompleto, rol);
-
-            // Guardar
-            boolean guardado = usuarioDAO.guardarUsuario(nuevoUsuario);
-
-            if (guardado) {
-                logger.info("Usuario registrado exitosamente: " + p_usuario);
-            }
-
-            return guardado;
-
-        } catch (Exception e) {
-            logger.error("Error al registrar usuario", e);
-            return false;
-        }
-    }
 }

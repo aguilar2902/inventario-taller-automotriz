@@ -16,7 +16,7 @@ public class Usuario {
         ADMIN, EMPLEADO
     }
 
-    //Constructor vacio
+    //Constructor interno (para uso de BD)
     public Usuario(Integer p_id, String p_usuario, String p_contrasena, String p_nombreCompleto, Rol p_rol, boolean p_activo, LocalDateTime p_fecha){
         this.setId(p_id);
         this.setUsuario(p_usuario);
@@ -26,6 +26,16 @@ public class Usuario {
         this.setActivo(p_activo);
         this.setFechaCreacion(p_fecha);
     }
+    // Constructor completo
+    public Usuario(String p_usuario, String p_nombreCompleto, Rol p_rol) {
+        this.setUsuario(p_usuario);
+        this.setContrasena("");
+        this.setNombreCompleto(p_nombreCompleto);
+        this.setRol(p_rol);
+        this.setActivo(true);
+        this.setFechaCreacion(LocalDateTime.now());
+    }
+
     // Constructor completo
     public Usuario(String p_usuario, String p_contrasena, String p_nombreCompleto, Rol p_rol) {
         this.setUsuario(p_usuario);

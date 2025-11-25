@@ -4,7 +4,6 @@ package com.taller.dao.impl;
 import com.taller.config.DatabaseManager;
 import com.taller.dao.interfaces.IUsuarioDAO;
 import com.taller.model.Usuario;
-import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -89,17 +88,10 @@ public class UsuarioDAOImpl implements IUsuarioDAO{
             stmt.setString(2, p_usuario.getContrasena());
             stmt.setString(3, p_usuario.getNombreCompleto());
             stmt.setString(4, p_usuario.getRol().name());
-            stmt.setBoolean(5, p_usuario.getActivo());
 
             int affectedRows = stmt.executeUpdate();
 
             if (affectedRows > 0) {
-                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        //revisar luego esta linea i es necesario
-                        //p_usuario.setId(generatedKeys.getInt(1));
-                    }
-                }
                 logger.info("Usuario creado: " + p_usuario.getUsuario());
                 return true;
             }
