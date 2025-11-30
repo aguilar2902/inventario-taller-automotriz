@@ -13,4 +13,5 @@ public interface IUsuarioDAO {
     boolean modificarUsuario(Usuario p_usuario);
     boolean eliminarUsuario(Integer p_id);
     boolean existeUsuario(String p_usuario);
+    boolean actualizarPassword(int id, String nuevaPasswordHash);
 }

@@ -9,6 +9,7 @@ public class Usuario {
     private String nombreCompleto;
     private Rol rol;
     private boolean activo;
+    private boolean requiereCambioPassword;
     private LocalDateTime fechaCreacion;
 
     // Enumeración para roles
@@ -17,13 +18,14 @@ public class Usuario {
     }
 
     //Constructor interno (para uso de BD)
-    public Usuario(Integer p_id, String p_usuario, String p_contrasena, String p_nombreCompleto, Rol p_rol, boolean p_activo, LocalDateTime p_fecha){
+    public Usuario(Integer p_id, String p_usuario, String p_contrasena, String p_nombreCompleto, Rol p_rol, boolean p_activo, boolean p_requiereCambioPassword, LocalDateTime p_fecha){
         this.setId(p_id);
         this.setUsuario(p_usuario);
         this.setContrasena(p_contrasena);
         this.setNombreCompleto(p_nombreCompleto);
         this.setRol(p_rol);
         this.setActivo(p_activo);
+        this.setRequiereCambioPassword(p_requiereCambioPassword);
         this.setFechaCreacion(p_fecha);
     }
     // Constructor completo
@@ -33,6 +35,7 @@ public class Usuario {
         this.setNombreCompleto(p_nombreCompleto);
         this.setRol(p_rol);
         this.setActivo(true);
+        this.setRequiereCambioPassword(true);
         this.setFechaCreacion(LocalDateTime.now());
     }
 
@@ -43,6 +46,7 @@ public class Usuario {
         this.setNombreCompleto(p_nombreCompleto);
         this.setRol(p_rol);
         this.setActivo(true);
+        this.setRequiereCambioPassword(false);
         this.setFechaCreacion(LocalDateTime.now());
     }
 
@@ -65,6 +69,9 @@ public class Usuario {
     }
     private void setActivo(boolean activo) {
         this.activo = activo;
+    }
+    private void setRequiereCambioPassword(boolean requiereCambioPassword) {
+        this.requiereCambioPassword = requiereCambioPassword;
     }
     private void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
@@ -95,8 +102,16 @@ public class Usuario {
         return this.activo;
     }
 
+    public boolean getRequiereCambioPassword() {
+        return this.requiereCambioPassword;
+    }
+
     public LocalDateTime getFechaCreacion() {
         return this.fechaCreacion;
+    }
+
+    public boolean tienePrimerLogin() {
+        return this.contrasena == null || this.contrasena.isEmpty() || this.requiereCambioPassword;
     }
 
     @Override

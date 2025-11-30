@@ -54,34 +54,29 @@ public class UsuarioService {
             return false;
         }
 
-        if (usuario.getContrasena() == null || usuario.getContrasena().trim().isEmpty()) {
-            logger.warn("Intento de guardar usuario sin contraseña");
-            return false;
-        }
-
-        // Verificar si el usuario ya existe
+        // Verificar usuario duplicado
         if (usuarioDAO.existeUsuario(usuario.getUsuario())) {
             logger.warn("El usuario ya existe: " + usuario.getUsuario());
             return false;
         }
 
-        // Encriptar contraseña antes de guardar
-        String hashedPassword = BCrypt.hashpw(usuario.getContrasena(), BCrypt.gensalt());
+        // Si viene con contraseña, encriptarla antes de guardar
+        if (usuario.getContrasena() != null && !usuario.getContrasena().isEmpty()) {
+            String hashedPassword = BCrypt.hashpw(usuario.getContrasena(), BCrypt.gensalt());
+            // Crear nuevo usuario con contraseña encriptada
+            Usuario usuarioConHashedPassword = new Usuario(
+                    usuario.getUsuario(),
+                    hashedPassword,
+                    usuario.getNombreCompleto(),
+                    usuario.getRol()
 
-        Usuario usuarioConHash = new Usuario(
-                usuario.getUsuario(),
-                hashedPassword,
-                usuario.getNombreCompleto(),
-                usuario.getRol()
-        );
+            );
 
-        boolean resultado = usuarioDAO.guardarUsuario(usuarioConHash);
-
-        if (resultado) {
-            logger.info("Usuario guardado exitosamente: " + usuario.getUsuario());
+            return usuarioDAO.guardarUsuario(usuarioConHashedPassword);
         }
 
-        return resultado;
+        // Si no tiene contraseña (primer login)
+        return usuarioDAO.guardarUsuario(usuario);
     }
 
     public boolean actualizar(Usuario usuario) {
@@ -97,93 +92,7 @@ public class UsuarioService {
             return false;
         }
 
-        // Verificar username duplicado (excepto el mismo usuario)
-        Optional<Usuario> porUsuario = usuarioDAO.buscarPorUsuario(usuario.getUsuario());
-        if (porUsuario.isPresent() && !porUsuario.get().getId().equals(usuario.getId())) {
-            logger.warn("El nombre de usuario ya existe en otro usuario: " + usuario.getUsuario());
-            return false;
-        }
-
-        boolean resultado = usuarioDAO.modificarUsuario(usuario);
-
-        if (resultado) {
-            logger.info("Usuario actualizado exitosamente: " + usuario.getUsuario());
-        }
-
-        return resultado;
-    }
-
-    public boolean cambiarContrasena(Integer id, String nuevaContrasena) {
-        if (id == null || nuevaContrasena == null || nuevaContrasena.trim().isEmpty()) {
-            logger.warn("Parámetros inválidos para cambiar contraseña");
-            return false;
-        }
-
-        Optional<Usuario> usuarioOpt = usuarioDAO.buscarPorId(id);
-
-        if (usuarioOpt.isEmpty()) {
-            logger.warn("Usuario no encontrado para cambio de contraseña: " + id);
-            return false;
-        }
-
-        Usuario usuario = usuarioOpt.get();
-        String hashedPassword = BCrypt.hashpw(nuevaContrasena, BCrypt.gensalt());
-
-        Usuario usuarioActualizado = new Usuario(
-                usuario.getId(),
-                usuario.getUsuario(),
-                hashedPassword,
-                usuario.getNombreCompleto(),
-                usuario.getRol(),
-                usuario.getActivo(),
-                usuario.getFechaCreacion()
-        );
-
-        boolean resultado = usuarioDAO.modificarUsuario(usuarioActualizado);
-
-        if (resultado) {
-            logger.info("Contraseña cambiada exitosamente para usuario ID: " + id);
-        }
-
-        return resultado;
-    }
-
-    public boolean resetearContrasena(Integer id) {
-        if (id == null) {
-            logger.warn("ID inválido para resetear contraseña");
-            return false;
-        }
-
-        Optional<Usuario> usuarioOpt = usuarioDAO.buscarPorId(id);
-
-        if (usuarioOpt.isEmpty()) {
-            logger.warn("Usuario no encontrado para resetear contraseña: " + id);
-            return false;
-        }
-
-        Usuario usuario = usuarioOpt.get();
-
-        // Contraseña temporal: username + "123"
-        String contrasenaTemporal = usuario.getUsuario() + "123";
-        String hashedPassword = BCrypt.hashpw(contrasenaTemporal, BCrypt.gensalt());
-
-        Usuario usuarioActualizado = new Usuario(
-                usuario.getId(),
-                usuario.getUsuario(),
-                hashedPassword,
-                usuario.getNombreCompleto(),
-                usuario.getRol(),
-                usuario.getActivo(),
-                usuario.getFechaCreacion()
-        );
-
-        boolean resultado = usuarioDAO.modificarUsuario(usuarioActualizado);
-
-        if (resultado) {
-            logger.info("Contraseña reseteada para usuario: " + usuario.getUsuario());
-        }
-
-        return resultado;
+        return usuarioDAO.modificarUsuario(usuario);
     }
 
     public boolean eliminar(Integer id) {
@@ -205,5 +114,155 @@ public class UsuarioService {
 
     public boolean existeUsuario(String usuario) {
         return usuarioDAO.existeUsuario(usuario);
+    }
+    /**
+     * Cambia la contraseña de un usuario (desde el CRUD de usuarios)
+     */
+    public boolean cambiarContrasena(Integer id, String nuevaContrasena) {
+        logger.info("Intentando cambiar contraseña para usuario ID: " + id);
+
+        try {
+            Optional<Usuario> usuarioOpt = usuarioDAO.buscarPorId(id);
+
+            if (usuarioOpt.isEmpty()) {
+                logger.warn("Usuario no encontrado para cambiar contraseña: " + id);
+                return false;
+            }
+
+            Usuario usuario = usuarioOpt.get();
+
+            // Encriptar nueva contraseña
+            String hashedPassword = BCrypt.hashpw(nuevaContrasena, BCrypt.gensalt());
+
+            // Crear usuario actualizado
+            Usuario usuarioActualizado = new Usuario(
+                    usuario.getId(),
+                    usuario.getUsuario(),
+                    hashedPassword,
+                    usuario.getNombreCompleto(),
+                    usuario.getRol(),
+                    usuario.getActivo(),
+                    false,  // Ya no requiere cambio de contraseña
+                    usuario.getFechaCreacion()
+            );
+
+            boolean resultado = usuarioDAO.modificarUsuario(usuarioActualizado);
+
+            if (resultado) {
+                logger.info("Contraseña cambiada exitosamente para usuario ID: " + id);
+            }
+
+            return resultado;
+
+        } catch (Exception e) {
+            logger.error("Error al cambiar contraseña para usuario ID: " + id, e);
+            return false;
+        }
+    }
+
+    /**
+     * BLANQUEA la contraseña del usuario (solo admin puede hacer esto)
+     * Establece contraseña en NULL y marca requiere_cambio_password = TRUE
+     */
+    public boolean blanquearContrasena(Integer id) {
+        logger.info("Intentando blanquear contraseña para usuario ID: " + id);
+
+        try {
+            Optional<Usuario> usuarioOpt = usuarioDAO.buscarPorId(id);
+
+            if (usuarioOpt.isEmpty()) {
+                logger.warn("Usuario no encontrado para blanquear contraseña: " + id);
+                return false;
+            }
+
+            Usuario usuario = usuarioOpt.get();
+
+            // No permitir blanquear la contraseña del propio admin logueado
+            AuthService authService = AuthService.getInstance();
+            if (authService.getUsuarioActual() != null &&
+                    authService.getUsuarioActual().getId().equals(id)) {
+                logger.warn("No se puede blanquear la contraseña del usuario actual");
+                return false;
+            }
+
+            // Crear usuario con contraseña NULL y requiere cambio
+            Usuario usuarioBlanqueado = new Usuario(
+                    usuario.getId(),
+                    usuario.getUsuario(),
+                    null,  // Contraseña NULL
+                    usuario.getNombreCompleto(),
+                    usuario.getRol(),
+                    usuario.getActivo(),
+                    true,  // REQUIERE cambio de contraseña
+                    usuario.getFechaCreacion()
+            );
+
+            boolean resultado = usuarioDAO.modificarUsuario(usuarioBlanqueado);
+
+            if (resultado) {
+                logger.info("Contraseña blanqueada exitosamente para usuario ID: " + id);
+            }
+
+            return resultado;
+
+        } catch (Exception e) {
+            logger.error("Error al blanquear contraseña para usuario ID: " + id, e);
+            return false;
+        }
+    }
+
+    /**
+     * RESETEA la contraseña a un valor por defecto (username + "123")
+     * Y marca requiere_cambio_password = TRUE
+     */
+    public boolean resetearContrasena(Integer id) {
+        logger.info("Intentando resetear contraseña para usuario ID: " + id);
+
+        try {
+            Optional<Usuario> usuarioOpt = usuarioDAO.buscarPorId(id);
+
+            if (usuarioOpt.isEmpty()) {
+                logger.warn("Usuario no encontrado para resetear contraseña: " + id);
+                return false;
+            }
+
+            Usuario usuario = usuarioOpt.get();
+
+            // No permitir resetear la contraseña del propio admin logueado
+            AuthService authService = AuthService.getInstance();
+            if (authService.getUsuarioActual() != null &&
+                    authService.getUsuarioActual().getId().equals(id)) {
+                logger.warn("No se puede resetear la contraseña del usuario actual");
+                return false;
+            }
+
+            // Contraseña temporal: username + "123"
+            String contrasenaTemporal = usuario.getUsuario() + "123";
+            String hashedPassword = BCrypt.hashpw(contrasenaTemporal, BCrypt.gensalt());
+
+            // Crear usuario con contraseña temporal
+            Usuario usuarioReseteado = new Usuario(
+                    usuario.getId(),
+                    usuario.getUsuario(),
+                    hashedPassword,
+                    usuario.getNombreCompleto(),
+                    usuario.getRol(),
+                    usuario.getActivo(),
+                    true,  // REQUIERE cambio de contraseña
+                    usuario.getFechaCreacion()
+            );
+
+            boolean resultado = usuarioDAO.modificarUsuario(usuarioReseteado);
+
+            if (resultado) {
+                logger.info("Contraseña reseteada a temporal para usuario ID: " + id);
+            }
+
+            return resultado;
+
+        } catch (Exception e) {
+            logger.error("Error al resetear contraseña para usuario ID: " + id, e);
+            return false;
+        }
     }
 }

@@ -41,7 +41,7 @@ public class UsuarioFormDialog extends JDialog {
 
     private void initComponents() {
         setLayout(new BorderLayout(10, 10));
-        setSize(500, esEdicion ? 480 : 550);
+        setSize(500, esEdicion ? 420 : 520);
         setResizable(false);
 
         // Panel principal con formulario
@@ -107,46 +107,6 @@ public class UsuarioFormDialog extends JDialog {
 
         row++;
 
-        // Contraseña (solo al crear)
-        if (!esEdicion) {
-            gbc.gridx = 0; gbc.gridy = row; gbc.weightx = 0;
-            JLabel lblContrasena = new JLabel("Contraseña: *");
-            lblContrasena.setFont(labelFont);
-            panel.add(lblContrasena, gbc);
-
-            gbc.gridx = 1; gbc.weightx = 1;
-            txtContrasena = new JPasswordField(20);
-            txtContrasena.setFont(fieldFont);
-            txtContrasena.setPreferredSize(new Dimension(250, 30));
-            panel.add(txtContrasena, gbc);
-
-            row++;
-
-            // Confirmar Contraseña
-            gbc.gridx = 0; gbc.gridy = row; gbc.weightx = 0;
-            JLabel lblConfirmar = new JLabel("Confirmar Contraseña: *");
-            lblConfirmar.setFont(labelFont);
-            panel.add(lblConfirmar, gbc);
-
-            gbc.gridx = 1; gbc.weightx = 1;
-            txtConfirmarContrasena = new JPasswordField(20);
-            txtConfirmarContrasena.setFont(fieldFont);
-            txtConfirmarContrasena.setPreferredSize(new Dimension(250, 30));
-            panel.add(txtConfirmarContrasena, gbc);
-
-            row++;
-        } else {
-            // Mensaje informativo en edición
-            gbc.gridx = 0; gbc.gridy = row; gbc.gridwidth = 2;
-            JLabel lblInfo = new JLabel("<html><i>Para cambiar la contraseña, use el botón \"Cambiar Contraseña\"</i></html>");
-            lblInfo.setFont(new Font("Segoe UI", Font.ITALIC, 11));
-            lblInfo.setForeground(Color.GRAY);
-            panel.add(lblInfo, gbc);
-            gbc.gridwidth = 1;
-
-            row++;
-        }
-
         // Rol
         gbc.gridx = 0; gbc.gridy = row; gbc.weightx = 0;
         JLabel lblRol = new JLabel("Rol: *");
@@ -160,6 +120,88 @@ public class UsuarioFormDialog extends JDialog {
         panel.add(cmbRol, gbc);
 
         row++;
+
+        // Campos de contraseña (solo al crear)
+        if (!esEdicion) {
+            // Crear componentes de contraseña
+            JLabel lblContrasena = new JLabel("Contraseña: *");
+            lblContrasena.setFont(labelFont);
+
+            txtContrasena = new JPasswordField(20);
+            txtContrasena.setFont(fieldFont);
+            txtContrasena.setPreferredSize(new Dimension(250, 30));
+
+            JLabel lblConfirmar = new JLabel("Confirmar Contraseña: *");
+            lblConfirmar.setFont(labelFont);
+
+            txtConfirmarContrasena = new JPasswordField(20);
+            txtConfirmarContrasena.setFont(fieldFont);
+            txtConfirmarContrasena.setPreferredSize(new Dimension(250, 30));
+
+            JLabel lblInfoPassword = new JLabel("<html><i>Solo ADMIN requiere contraseña al crear.<br>EMPLEADO la establecerá en su primer login.</i></html>");
+            lblInfoPassword.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+            lblInfoPassword.setForeground(Color.GRAY);
+
+            // Listener para mostrar/ocultar campos según rol
+            cmbRol.addActionListener(e -> {
+                Usuario.Rol rolSeleccionado = (Usuario.Rol) cmbRol.getSelectedItem();
+                boolean esAdmin = rolSeleccionado == Usuario.Rol.ADMIN;
+
+                // Mostrar/ocultar componentes de contraseña
+                lblContrasena.setVisible(esAdmin);
+                txtContrasena.setVisible(esAdmin);
+                lblConfirmar.setVisible(esAdmin);
+                txtConfirmarContrasena.setVisible(esAdmin);
+                lblInfoPassword.setVisible(!esAdmin);
+
+                // Revalidar el panel
+                panel.revalidate();
+                panel.repaint();
+            });
+
+            // Agregar campos de contraseña al panel
+            gbc.gridx = 0; gbc.gridy = row; gbc.weightx = 0;
+            panel.add(lblContrasena, gbc);
+
+            gbc.gridx = 1; gbc.weightx = 1;
+            panel.add(txtContrasena, gbc);
+
+            row++;
+
+            gbc.gridx = 0; gbc.gridy = row; gbc.weightx = 0;
+            panel.add(lblConfirmar, gbc);
+
+            gbc.gridx = 1; gbc.weightx = 1;
+            panel.add(txtConfirmarContrasena, gbc);
+
+            row++;
+
+            // Información sobre contraseñas
+            gbc.gridx = 0; gbc.gridy = row; gbc.gridwidth = 2;
+            panel.add(lblInfoPassword, gbc);
+            gbc.gridwidth = 1;
+
+            row++;
+
+            // Inicialmente ocultar campos (por defecto ADMIN está seleccionado, así que mostrar)
+            boolean inicialmenteAdmin = cmbRol.getSelectedItem() == Usuario.Rol.ADMIN;
+            lblContrasena.setVisible(inicialmenteAdmin);
+            txtContrasena.setVisible(inicialmenteAdmin);
+            lblConfirmar.setVisible(inicialmenteAdmin);
+            txtConfirmarContrasena.setVisible(inicialmenteAdmin);
+            lblInfoPassword.setVisible(!inicialmenteAdmin);
+
+        } else {
+            // Mensaje informativo en edición
+            gbc.gridx = 0; gbc.gridy = row; gbc.gridwidth = 2;
+            JLabel lblInfo = new JLabel("<html><i>Para cambiar la contraseña, use el botón \"Cambiar Contraseña\"</i></html>");
+            lblInfo.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+            lblInfo.setForeground(Color.GRAY);
+            panel.add(lblInfo, gbc);
+            gbc.gridwidth = 1;
+
+            row++;
+        }
 
         // Activo
         gbc.gridx = 0; gbc.gridy = row; gbc.weightx = 0;
@@ -256,32 +298,6 @@ public class UsuarioFormDialog extends JDialog {
             return;
         }
 
-        // Validar contraseñas solo al crear nuevo usuario
-        if (!esEdicion) {
-            String contrasena = new String(txtContrasena.getPassword());
-            String confirmar = new String(txtConfirmarContrasena.getPassword());
-
-            if (contrasena.isEmpty()) {
-                mostrarError("La contraseña es obligatoria", txtContrasena);
-                return;
-            }
-
-            if (contrasena.length() < 4) {
-                mostrarError("La contraseña debe tener al menos 4 caracteres", txtContrasena);
-                return;
-            }
-
-            if (!contrasena.equals(confirmar)) {
-                JOptionPane.showMessageDialog(this,
-                        "Las contraseñas no coinciden",
-                        "Validación",
-                        JOptionPane.WARNING_MESSAGE);
-                txtConfirmarContrasena.requestFocus();
-                txtConfirmarContrasena.selectAll();
-                return;
-            }
-        }
-
         try {
             if (esEdicion) {
                 // Actualizar usuario existente (sin cambiar contraseña)
@@ -292,19 +308,57 @@ public class UsuarioFormDialog extends JDialog {
                         txtNombreCompleto.getText().trim(),
                         (Usuario.Rol) cmbRol.getSelectedItem(),
                         chkActivo.isSelected(),
+                        usuario.getRequiereCambioPassword(), // Mantener estado
                         usuario.getFechaCreacion()
                 );
                 logger.info("Usuario actualizado: " + usuario.getUsuario());
             } else {
                 // Crear nuevo usuario
-                String contrasena = new String(txtContrasena.getPassword());
-                usuario = new Usuario(
-                        txtUsuario.getText().trim(),
-                        contrasena,
-                        txtNombreCompleto.getText().trim(),
-                        (Usuario.Rol) cmbRol.getSelectedItem()
-                );
-                logger.info("Usuario nuevo creado: " + usuario.getUsuario());
+                Usuario.Rol rolSeleccionado = (Usuario.Rol) cmbRol.getSelectedItem();
+
+                if (rolSeleccionado == Usuario.Rol.ADMIN) {
+                    // ADMIN: Requiere contraseña obligatoria
+                    String contrasena = new String(txtContrasena.getPassword());
+                    String confirmar = new String(txtConfirmarContrasena.getPassword());
+
+                    if (contrasena.isEmpty()) {
+                        mostrarError("La contraseña es obligatoria para usuarios ADMIN", txtContrasena);
+                        return;
+                    }
+
+                    if (contrasena.length() < 6) {
+                        mostrarError("La contraseña debe tener al menos 6 caracteres", txtContrasena);
+                        return;
+                    }
+
+                    if (!contrasena.equals(confirmar)) {
+                        JOptionPane.showMessageDialog(this,
+                                "Las contraseñas no coinciden",
+                                "Validación",
+                                JOptionPane.WARNING_MESSAGE);
+                        txtConfirmarContrasena.requestFocus();
+                        txtConfirmarContrasena.selectAll();
+                        return;
+                    }
+
+                    // Crear ADMIN con contraseña
+                    usuario = new Usuario(
+                            txtUsuario.getText().trim(),
+                            contrasena,
+                            txtNombreCompleto.getText().trim(),
+                            Usuario.Rol.ADMIN
+                    );
+                    logger.info("Usuario ADMIN creado con contraseña: " + usuario.getUsuario());
+
+                } else {
+                    // EMPLEADO: Sin contraseña (primer login)
+                    usuario = new Usuario(
+                            txtUsuario.getText().trim(),
+                            txtNombreCompleto.getText().trim(),
+                            Usuario.Rol.EMPLEADO
+                    );
+                    logger.info("Usuario EMPLEADO creado sin contraseña: " + usuario.getUsuario());
+                }
             }
 
             confirmado = true;

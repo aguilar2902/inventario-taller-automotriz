@@ -54,6 +54,7 @@ public class UsuarioController {
             boolean resultado = usuarioService.guardar(usuario);
             if (resultado) {
                 logger.info("Usuario guardado exitosamente: " + usuario.getUsuario());
+                logger.info("Contraseña: " + usuario.getContrasena());
             } else {
                 logger.warn("No se pudo guardar el usuario: " + usuario.getUsuario());
             }
@@ -140,5 +141,20 @@ public class UsuarioController {
 
     public boolean validarUsuarioUnico(String usuario) {
         return !usuarioService.existeUsuario(usuario);
+    }
+    public boolean blanquearContrasena(Integer id) {
+        logger.info("Intentando blanquear contraseña para usuario ID: " + id);
+        try {
+            boolean resultado = usuarioService.blanquearContrasena(id);
+            if (resultado) {
+                logger.info("Contraseña blanqueada exitosamente para usuario ID: " + id);
+            } else {
+                logger.warn("No se pudo blanquear la contraseña para usuario ID: " + id);
+            }
+            return resultado;
+        } catch (Exception e) {
+            logger.error("Error al blanquear contraseña", e);
+            return false;
+        }
     }
 }

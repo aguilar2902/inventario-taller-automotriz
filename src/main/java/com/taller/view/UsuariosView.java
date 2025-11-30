@@ -160,7 +160,7 @@ public class UsuariosView extends JPanel {
         btnNuevo = createButton("➕ Nuevo Usuario", new Color(40, 167, 69), "Crear un nuevo usuario");
         btnEditar = createButton("✏️ Editar", new Color(255, 193, 7), "Editar usuario seleccionado");
         btnCambiarPass = createButton("🔑 Cambiar Contraseña", new Color(0, 123, 255), "Cambiar contraseña del usuario");
-        btnResetearPass = createButton("🔄 Resetear Contraseña", new Color(108, 117, 125), "Resetear a contraseña temporal");
+        btnResetearPass = createButton("🔄 Blanquear Contraseña", new Color(108, 117, 125), "Blanquear contraseña (primer login)");
         btnEliminar = createButton("🗑️ Eliminar", new Color(220, 53, 69), "Desactivar usuario");
 
         // Deshabilitar botones de edición inicialmente
@@ -386,7 +386,7 @@ public class UsuariosView extends JPanel {
         int selectedRow = tablaUsuarios.getSelectedRow();
 
         if (selectedRow == -1) {
-            mostrarAdvertencia("Seleccione un usuario para resetear la contraseña");
+            mostrarAdvertencia("Seleccione un usuario para blanquear la contraseña");
             return;
         }
 
@@ -394,23 +394,44 @@ public class UsuariosView extends JPanel {
             Integer id = (Integer) modeloTabla.getValueAt(selectedRow, 0);
             String nombreUsuario = (String) modeloTabla.getValueAt(selectedRow, 1);
 
-            int confirm = JOptionPane.showConfirmDialog(this,
-                    "¿Está seguro que desea resetear la contraseña del usuario:\n\"" + nombreUsuario + "\"?\n\n" +
-                            "La nueva contraseña será: " + nombreUsuario + "123",
-                    "Confirmar reseteo",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.QUESTION_MESSAGE);
+            // Opciones: Blanquear (NULL) o Resetear (password temporal)
+            Object[] opciones = {"Blanquear (sin contraseña)", "Resetear a temporal", "Cancelar"};
 
-            if (confirm == JOptionPane.YES_OPTION) {
-                if (controller.resetearContrasena(id)) {
-                    mostrarExito("Contraseña reseteada exitosamente a: " + nombreUsuario + "123");
+            int opcion = JOptionPane.showOptionDialog(this,
+                    "Seleccione cómo desea resetear la contraseña del usuario:\n\"" + nombreUsuario + "\"\n\n" +
+                            "• Blanquear: Elimina la contraseña (debe establecer una nueva en el próximo login)\n" +
+                            "• Resetear: Establece contraseña temporal '" + nombreUsuario + "123' (debe cambiarla en el próximo login)",
+                    "Blanquear/Resetear Contraseña",
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]);
+
+            if (opcion == 0) {
+                // Blanquear (contraseña NULL)
+                if (controller.blanquearContrasena(id)) {
+                    mostrarExito("Contraseña blanqueada exitosamente.\n" +
+                            "El usuario deberá establecer una nueva contraseña en su próximo login.");
                 } else {
-                    mostrarError("Error al resetear la contraseña");
+                    mostrarError("Error al blanquear la contraseña.\n" +
+                            "No puede blanquear su propia contraseña.");
+                }
+            } else if (opcion == 1) {
+                // Resetear a temporal
+                if (controller.resetearContrasena(id)) {
+                    mostrarExito("Contraseña reseteada exitosamente a: " + nombreUsuario + "123\n" +
+                            "El usuario deberá cambiarla en su próximo login.");
+                } else {
+                    mostrarError("Error al resetear la contraseña.\n" +
+                            "No puede resetear su propia contraseña.");
                 }
             }
+            // Si opcion == 2 o CANCEL, no hacer nada
+
         } catch (Exception e) {
-            logger.error("Error al resetear contraseña", e);
-            mostrarError("Error al resetear la contraseña");
+            logger.error("Error al resetear/blanquear contraseña", e);
+            mostrarError("Error al procesar la operación");
         }
     }
 

@@ -22,6 +22,8 @@ public class LoginView extends JFrame{
     public LoginView() {
         controller = new LoginController(this);
         initComponents();
+        setLocationRelativeTo(null);
+        setVisible(true);
         setupUI();
     }
 
@@ -242,16 +244,10 @@ public class LoginView extends JFrame{
         String usuario = txtUsuario.getText().trim();
         String password = new String(txtPassword.getPassword());
 
-        // Validaciones básicas
+        // Validación básica
         if (usuario.isEmpty()) {
             mostrarError("Por favor ingrese su usuario");
             txtUsuario.requestFocus();
-            return;
-        }
-
-        if (password.isEmpty()) {
-            mostrarError("Por favor ingrese su contraseña");
-            txtPassword.requestFocus();
             return;
         }
 
@@ -262,29 +258,48 @@ public class LoginView extends JFrame{
         lblMensaje.setForeground(Color.GRAY);
 
         // Procesar login en segundo plano
-        SwingWorker<Boolean, Void> worker = new SwingWorker<>() {
+        SwingWorker<LoginController.LoginResult, Void> worker = new SwingWorker<>() {
             @Override
-            protected Boolean doInBackground() throws Exception {
+            protected LoginController.LoginResult doInBackground() throws Exception {
                 return controller.login(usuario, password);
             }
 
             @Override
             protected void done() {
                 try {
-                    boolean resultado = get();
+                    LoginController.LoginResult resultado = get();
 
-                    if (resultado) {
-                        mostrarExito("¡Bienvenido!");
-                        // Pequeña pausa antes de abrir ventana principal
-                        Timer timer = new Timer(500, evt -> abrirVentanaPrincipal());
-                        timer.setRepeats(false);
-                        timer.start();
-                    } else {
-                        mostrarError("Usuario o contraseña incorrectos");
-                        txtPassword.setText("");
-                        txtPassword.requestFocus();
-                        btnLogin.setEnabled(true);
-                        btnLogin.setText("Iniciar Sesión");
+                    switch (resultado) {
+                        case EXITOSO:
+                            mostrarExito("¡Bienvenido!");
+                            Timer timer = new Timer(500, evt -> abrirVentanaPrincipal());
+                            timer.setRepeats(false);
+                            timer.start();
+                            break;
+
+                        case PRIMER_ACCESO:
+                            mostrarInfo("Primer acceso detectado");
+                            abrirCambioPasswordPrimerAcceso();
+                            break;
+
+                        case REQUIERE_CAMBIO_PASSWORD:
+                            mostrarInfo("Debe cambiar su contraseña");
+                            abrirCambioPasswordObligatorio();
+                            break;
+
+                        case CREDENCIALES_INVALIDAS:
+                            mostrarError("Usuario o contraseña incorrectos");
+                            txtPassword.setText("");
+                            txtPassword.requestFocus();
+                            btnLogin.setEnabled(true);
+                            btnLogin.setText("Iniciar Sesión");
+                            break;
+
+                        case ERROR:
+                            mostrarError("Error al procesar el login");
+                            btnLogin.setEnabled(true);
+                            btnLogin.setText("Iniciar Sesión");
+                            break;
                     }
                 } catch (Exception e) {
                     logger.error("Error durante el login", e);
@@ -298,6 +313,54 @@ public class LoginView extends JFrame{
         worker.execute();
     }
 
+    private void abrirCambioPasswordPrimerAcceso() {
+        logger.info("Abriendo diálogo de cambio de contraseña (primer acceso)");
+
+        SwingUtilities.invokeLater(() -> {
+            CambiarPasswordDialog dialog = new CambiarPasswordDialog(this, true);
+            dialog.setVisible(true);
+
+            if (dialog.isPasswordEstablecida()) {
+                mostrarExito("¡Contraseña establecida! Iniciando sesión...");
+                Timer timer = new Timer(800, evt -> abrirVentanaPrincipal());
+                timer.setRepeats(false);
+                timer.start();
+            } else {
+                // Si canceló o falló, limpiar formulario
+                txtUsuario.setText("");
+                txtPassword.setText("");
+                btnLogin.setEnabled(true);
+                btnLogin.setText("Iniciar Sesión");
+                lblMensaje.setText("");
+            }
+        });
+    }
+
+    private void abrirCambioPasswordObligatorio() {
+        logger.info("Abriendo diálogo de cambio de contraseña (obligatorio)");
+
+        SwingUtilities.invokeLater(() -> {
+            CambiarPasswordDialog dialog = new CambiarPasswordDialog(this, true);
+            dialog.setVisible(true);
+
+            if (dialog.isPasswordEstablecida()) {
+                mostrarExito("¡Contraseña actualizada! Iniciando sesión...");
+                Timer timer = new Timer(800, evt -> abrirVentanaPrincipal());
+                timer.setRepeats(false);
+                timer.start();
+            } else {
+                txtPassword.setText("");
+                btnLogin.setEnabled(true);
+                btnLogin.setText("Iniciar Sesión");
+                lblMensaje.setText("");
+            }
+        });
+    }
+
+    private void mostrarInfo(String mensaje) {
+        lblMensaje.setText("ℹ️ " + mensaje);
+        lblMensaje.setForeground(new Color(0, 123, 255));
+    }
     private void abrirVentanaPrincipal() {
         logger.info("Abriendo ventana principal...");
 

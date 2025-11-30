@@ -2,6 +2,8 @@ package com.taller.view;
 
 import com.taller.model.Usuario;
 import com.taller.service.AuthService;
+import com.taller.view.components.Sidebar;
+import com.taller.view.components.SidebarButton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +16,12 @@ import java.awt.event.MouseEvent;
 public class MainView extends JFrame {
     private static final Logger logger = LoggerFactory.getLogger(MainView.class);
     private final AuthService authService;
+
+    private Sidebar sidebar;
+    private SidebarButton btnInicio;
+    private SidebarButton btnProductos;
+    private SidebarButton btnUsuarios;
+    private SidebarButton btnConfig;
 
     private CardLayout cardLayout;
     private JPanel panelCentral;
@@ -30,25 +38,30 @@ public class MainView extends JFrame {
         setSize(1200, 750);
         setLocationRelativeTo(null);
 
-        // Panel principal
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(Color.WHITE);
+        add(mainPanel);
 
         // Barra superior
-        JPanel topBar = createTopBar();
-        mainPanel.add(topBar, BorderLayout.NORTH);
+        mainPanel.add(createTopBar(), BorderLayout.NORTH);
+
 
         // Menú lateral
-        JPanel sidebar = createNavigationMenu();
+        sidebar = new Sidebar();
+
+        btnInicio = sidebar.addButton("Inicio", new ImageIcon("icons/home.png"));
+        btnProductos = sidebar.addButton("Productos", new ImageIcon("icons/box.png"));
+        btnUsuarios = sidebar.addButton("Usuarios", new ImageIcon("icons/users.png"));
+        btnConfig = sidebar.addButton("Configuración", new ImageIcon("icons/config.png"));
+
         mainPanel.add(sidebar, BorderLayout.WEST);
 
         // Sistema de tarjetas (vistas)
         createCardSystem(mainPanel);
 
-        add(mainPanel);
         registrarVistas();
 
-        // Mostrar vista inicial
+        registrarEventosSidebar();
+
         mostrarVista("inicio");
 
         logger.info("Ventana principal inicializada");
@@ -429,5 +442,27 @@ public class MainView extends JFrame {
                 this.dispose();
             });
         }
+    }
+    private void registrarEventosSidebar() {
+
+        btnInicio.addActionListener(e -> {
+            sidebar.marcarActivo(btnInicio);
+            mostrarVista("inicio");
+        });
+
+        btnProductos.addActionListener(e -> {
+            sidebar.marcarActivo(btnProductos);
+            mostrarVista("productos");
+        });
+
+        btnUsuarios.addActionListener(e -> {
+            sidebar.marcarActivo(btnUsuarios);
+            mostrarVista("usuarios");
+        });
+
+        btnConfig.addActionListener(e -> {
+            sidebar.marcarActivo(btnConfig);
+            mostrarVista("config");
+        });
     }
 }

@@ -9,6 +9,8 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
+
+import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,14 +82,22 @@ public class UsuarioDAOImpl implements IUsuarioDAO{
 
     @Override
     public boolean guardarUsuario(Usuario p_usuario) {
-        String sql = "INSERT INTO usuarios (username, password, nombre_completo, rol) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO usuarios (username, password, nombre_completo, rol, requiere_cambio_password) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = dbManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, p_usuario.getUsuario());
-            stmt.setString(2, p_usuario.getContrasena());
+            // Si no tiene contraseña, guardar NULL
+            if (p_usuario.getContrasena() == null || p_usuario.getContrasena().isEmpty()) {
+                stmt.setNull(2, Types.VARCHAR);
+            } else {
+                // Encriptar contraseña
+                String hashedPassword = BCrypt.hashpw(p_usuario.getContrasena(), BCrypt.gensalt());
+                stmt.setString(2, hashedPassword);
+            }
             stmt.setString(3, p_usuario.getNombreCompleto());
             stmt.setString(4, p_usuario.getRol().name());
+            stmt.setBoolean(5, p_usuario.getRequiereCambioPassword());
 
             int affectedRows = stmt.executeUpdate();
 
@@ -105,7 +115,7 @@ public class UsuarioDAOImpl implements IUsuarioDAO{
 
     @Override
     public boolean modificarUsuario(Usuario p_usuario) {
-        String sql = "UPDATE usuarios SET username = ?, password = ?, nombre_completo = ?, rol = ?, activo = ? WHERE id = ?";
+        String sql = "UPDATE usuarios SET username = ?, password = ?, nombre_completo = ?, rol = ?, activo = ?, requiere_cambio_password = ? WHERE id = ?";
 
         try (Connection conn = dbManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -115,6 +125,7 @@ public class UsuarioDAOImpl implements IUsuarioDAO{
             stmt.setString(3, p_usuario.getNombreCompleto());
             stmt.setString(4, p_usuario.getRol().name());
             stmt.setBoolean(5, p_usuario.getActivo());
+            stmt.setBoolean(6, p_usuario.getRequiereCambioPassword());
             stmt.setInt(6, p_usuario.getId());
 
             int affectedRows = stmt.executeUpdate();
@@ -180,10 +191,27 @@ public class UsuarioDAOImpl implements IUsuarioDAO{
         String nombreCompleto = rs.getString("nombre_completo");
         Usuario.Rol rol = Usuario.Rol.valueOf(rs.getString("rol"));
         boolean activo = rs.getBoolean("activo");
+        boolean requiereCambioPassword = rs.getBoolean("requiere_cambio_password");
         Timestamp timestamp = rs.getTimestamp("fecha_creacion");
         LocalDateTime fecha = timestamp != null ? timestamp.toLocalDateTime() : null;
 
-        Usuario user = new Usuario(id, usuario, contrasena, nombreCompleto,rol, activo, fecha);
+        Usuario user = new Usuario(id, usuario, contrasena, nombreCompleto,rol, activo, requiereCambioPassword, fecha);
         return user;
+    }
+    public boolean actualizarPassword(int id, String nuevaPasswordHash) {
+        String sql = "UPDATE usuarios SET password = ?, requiere_cambio_password = FALSE WHERE id = ?";
+
+        try (Connection con = dbManager.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+
+            stmt.setString(1, nuevaPasswordHash);
+            stmt.setInt(2, id);
+
+            return stmt.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            logger.error("Error al actualizar contraseña", e);
+            return false;
+        }
     }
 }

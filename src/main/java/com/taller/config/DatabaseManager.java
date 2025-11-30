@@ -20,10 +20,6 @@ public class DatabaseManager {
             this.connection = DriverManager.getConnection(DB_URL);
             logger.info("Conexión a base de datos establecida");
             initializeDatabase();
-            createDefaultAdmin();
-            createDefaultCategorias();
-            createDefaultAdmin();
-            createDefaultCategorias();
         } catch (ClassNotFoundException | SQLException e) {
             logger.error("Error al conectar con la base de datos", e);
         }
@@ -62,6 +58,7 @@ public class DatabaseManager {
                     nombre_completo VARCHAR(100) NOT NULL,
                     rol VARCHAR(20) NOT NULL,
                     activo BOOLEAN NOT NULL DEFAULT TRUE,
+                    requiere_cambio_password BOOLEAN NOT NULL DEFAULT FALSE,
                     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """);
@@ -129,7 +126,7 @@ public class DatabaseManager {
                 // Usuario admin no existe, crearlo
                 String hashedPassword = org.mindrot.jbcrypt.BCrypt.hashpw("admin123", org.mindrot.jbcrypt.BCrypt.gensalt());
                 String insertAdmin = String.format(
-                        "INSERT INTO usuarios (username, password, nombre_completo, rol) VALUES ('admin', '%s', 'Administrador', 'ADMIN')",
+                        "INSERT INTO usuarios (username, password, nombre_completo, rol, requiere_cambio_password) VALUES ('admin', '%s', 'Administrador', 'ADMIN', FALSE)",
                         hashedPassword
                 );
                 stmt.execute(insertAdmin);
